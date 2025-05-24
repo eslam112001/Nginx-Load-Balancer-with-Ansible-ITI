@@ -32,6 +32,7 @@ project/
 │
 ├── inventory         # Ansible inventory (loadbalancer & webservers)
 ├── project.yaml      # Unified Playbook for Load Balancer and Web Servers
+└── node1.pem         # Private Key
 └── README.md         # Project Documentation
 
 ````
