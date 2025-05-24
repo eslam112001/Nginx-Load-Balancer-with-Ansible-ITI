@@ -1,0 +1,115 @@
+- name: Install and configure Nginx as Load Balancer
+  hosts: loadbalancer
+  become: true
+
+  tasks:
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: true
+
+#    - name: Ensure Nginx is started
+#      service:
+#        name: nginx
+#       state: started
+
+    - name: Create static website directory
+      file:
+        path: /var/www/html
+        state: directory
+        owner: www-data
+        group: www-data
+        mode: '0755'
+
+    - name: Add fallback page
+      copy:
+        dest: /var/www/html/fallback.html
+        content: | 
+          <html>
+            <head><title>2LMZARITA Team</title></head>
+            <body>
+              <h1>The page was not found</h1>
+              <p>Thank you.</p>
+            </body>
+          </html>
+        owner: www-data
+        group: www-data
+        mode: '0644'
+
+    - name: Configure Nginx load balancing
+      copy:
+        dest: /etc/nginx/sites-available/load_balancer
+        content: |
+          upstream backend {
+              server 54.227.86.175 max_fails=3 fail_timeout=30s;
+              server 3.80.218.45 max_fails=3 fail_timeout=30s;
+          }
+
+          server {
+              listen 80;
+
+              location / {
+                  proxy_pass http://backend;
+                  proxy_set_header Host $host;
+                  proxy_set_header X-Real-IP $remote_addr;
+                  proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+                  error_page 502 503 504 = /fallback.html;
+              }
+
+              location = /fallback.html {
+                  root /var/www/html;
+                  internal;
+              }
+          }
+
+    - name: Enable the new config
+      file:
+        src: /etc/nginx/sites-available/load_balancer
+        dest: /etc/nginx/sites-enabled/load_balancer
+        state: link
+        force: true
+
+    - name: Remove default site
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted
+
+# -----------------------------------------------------------------
+
+- name: Setup Web Servers
+  hosts: webservers
+  become: true
+
+  tasks:
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: true
+
+    - name: Start Nginx
+      service:
+        name: nginx
+        state: started
+
+    - name: Create index page
+      copy:
+        dest: /var/www/html/index.html
+        content: |
+          <html>
+            <head><title>2LMZARITA Team</title></head>
+            <body>
+              <h1>2LMZARITA Team</h1>
+              <h2>Welcome from {{ inventory_hostname }}</h2>
+              <p>This is a working web server.</p>
+            </body>
+          </html>
+        owner: www-data
+        group: www-data
+        mode: '0644'

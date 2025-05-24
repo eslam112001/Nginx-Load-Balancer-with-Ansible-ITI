@@ -1,0 +1,8 @@
+[loadbalancer]
+lb ansible_host=54.164.54.34 ansible_user=ubuntu ansible_ssh_private_key_file=/home/control-node/ansible-file/node1.pem
+
+
+[webservers]
+web1 ansible_host=54.227.86.175 ansible_user=ubuntu ansible_ssh_private_key_file=/home/control-node/ansible-file/node1.pem
+web2 ansible_host=3.80.218.45 ansible_user=ubuntu ansible_ssh_private_key_file=/home/control-node/ansible-file/node1.pem
+
