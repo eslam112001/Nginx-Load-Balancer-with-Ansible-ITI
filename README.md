@@ -1,31 +1,20 @@
-
-```markdown
 # Nginx Load Balancer Deployment using Ansible
-
 ## Overview
-This project sets up a high-availability web infrastructure using **Nginx** as a load balancer and **Ansible** for automation.  
-It uses a **single Ansible playbook (`project.yaml`)** to configure one load balancer node and two web server nodes on **AWS EC2**.  
-All servers serve static HTML pages and gracefully handle server errors.
+This project sets up a high-availability web infrastructure using Nginx as a load balancer and Ansible for automation. It deploys one load balancer node and two web server nodes on AWS EC2, configured to serve static HTML pages and handle server errors gracefully.
 
----
 
-## Infrastructure Layout
-
+### Infrastructure Layout
 ```
-
-```
-        ┌────────────┐
-        │  Client    │
-        └─────┬──────┘
-              │
-      ┌───────▼────────┐
-      │  Load Balancer │  ← Nginx (54.164.54.34)
-      └───────┬────────┘
-              │
- ┌────────────┴────────────┐
- │                         │
-```
-
+            ┌────────────┐
+            │  Client    │
+            └─────┬──────┘
+                  │
+          ┌───────▼────────┐
+          │  Load Balancer │  ← Nginx (54.164.54.34)
+          └───────┬────────┘
+                  │
+     ┌────────────┴────────────┐
+     │                         │
 ┌────▼────┐             ┌──────▼─────┐
 │ Web Server 1 │         │ Web Server 2 │
 │ 54.227.86.175│         │ 3.80.218.45  │
@@ -41,7 +30,7 @@ All servers serve static HTML pages and gracefully handle server errors.
 
 project/
 │
-├── inventory.ini     # Ansible inventory (loadbalancer & webservers)
+├── inventory         # Ansible inventory (loadbalancer & webservers)
 ├── project.yaml      # Unified Playbook for Load Balancer and Web Servers
 └── README.md         # Project Documentation
 
@@ -64,17 +53,21 @@ web2 ansible_host=3.80.218.45 ansible_user=ubuntu ansible_ssh_private_key_file=/
 
 ## Ansible Playbook (`project.yaml`)
 
-### Summary of Tasks
-
-#### Load Balancer:
+### Load Balancer:
 
 * Install Nginx
 * Create fallback HTML page
-* Configure Nginx as a load balancer with two backend servers
-* Enable the new configuration and disable the default site
+* Configure Nginx as load balancer with upstream web servers
+* Enable new config and remove default site
 * Restart Nginx
 
-#### Web Servers:
+### Key Configuration:
+* Uses proxy_pass to send traffic to upstream backend.
+* Includes fallback.html for 502/503/504 errors.
+
+
+
+### Web Servers:
 
 * Install and start Nginx
 * Deploy a simple `index.html` with dynamic hostname info
@@ -83,8 +76,9 @@ web2 ansible_host=3.80.218.45 ansible_user=ubuntu ansible_ssh_private_key_file=/
 
 ## Security & Access
 
-* All SSH access managed using the private key `node1.pem`
-* Make sure permissions are set correctly:
+* SSH access to all instances is handled via private key `node1.pem`
+* Ensure the key file has proper permissions (chmod 400)
+* Use ubuntu user for all EC2 instances.
 
   ```bash
   chmod 400 /path/to/node1.pem
@@ -98,7 +92,7 @@ web2 ansible_host=3.80.218.45 ansible_user=ubuntu ansible_ssh_private_key_file=/
 Execute the entire setup with one command:
 
 ```bash
-ansible-playbook -i inventory.ini project.yaml
+ansible-playbook -i inventory project.yaml
 ```
 
 ---
